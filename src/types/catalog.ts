@@ -62,3 +62,20 @@ export interface HealthResponse {
   lastSyncedAt: string | null;
   environment: string;
 }
+
+export type BannerTargetType = 'none' | 'category' | 'brand' | 'search' | 'product' | 'url';
+
+export interface PublicBanner {
+  id: string;
+  title: string;
+  image_url: string;
+  target_type: BannerTargetType;
+  target_value: string;
+  sort_order: number;
+}
+
+export interface AdminBanner extends PublicBanner {
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}

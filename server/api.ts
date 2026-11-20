@@ -1,5 +1,15 @@
 import { verifySyncAuth } from './auth';
 import {
+  type BannerMutationInput,
+  createAdminBanner,
+  deleteAdminBanner,
+  getBannerImagePayload,
+  listAdminBanners,
+  listPublicBanners,
+  reorderAdminBanners,
+  updateAdminBanner,
+} from './banners';
+import {
   getHealthStatus,
   parseCatalogQueryParams,
   queryPublicCatalog,
@@ -10,7 +20,7 @@ import { fetchCatalogFromSourceUrl, runCatalogSync } from './sync';
 
 export const API_CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Admin-Sync-Token',
 };
 
@@ -119,6 +129,123 @@ export async function handleApiRequest(
 
       const report = await runCatalogSync(db, payloadToSync, overrideMode);
       return jsonResponse(report, 200);
+    }
+
+    // 5. GET /api/banners (Public active hero slides)
+    if (request.method === 'GET' && pathname === '/api/banners') {
+      const items = await listPublicBanners(db);
+      return jsonResponse({ items }, 200);
+    }
+
+    // 6. GET /api/banners/image/:id (Public uploaded banner image binary)
+    if (request.method === 'GET') {
+      const imgMatch = pathname.match(/^\/api\/banners\/image\/([^/]+)$/);
+      if (imgMatch) {
+        const bannerId = decodeURIComponent(imgMatch[1]);
+        const payload = await getBannerImagePayload(db, bannerId);
+        if (!payload) {
+          return jsonResponse({ error: 'Banner image not found' }, 404);
+        }
+        if ('redirectUrl' in payload) {
+          return Response.redirect(new URL(payload.redirectUrl, url.origin).toString(), 302);
+        }
+        return new Response(new Uint8Array(payload.bytes), {
+          status: 200,
+          headers: {
+            'Content-Type': payload.contentType,
+            'Cache-Control': 'public, max-age=3600',
+            ...API_CORS_HEADERS,
+          },
+        });
+      }
+    }
+
+    // 7. Admin Banner Management Routes (Strictly protected by ADMIN_SYNC_TOKEN)
+    if (pathname === '/api/admin/verify' && request.method === 'POST') {
+      const authResult = verifySyncAuth(request.headers, env.ADMIN_SYNC_TOKEN);
+      if (authResult.authorized === false) {
+        return jsonResponse({ error: authResult.error }, authResult.status);
+      }
+      return jsonResponse({ ok: true }, 200);
+    }
+
+    if (pathname === '/api/admin/banners' && request.method === 'GET') {
+      const authResult = verifySyncAuth(request.headers, env.ADMIN_SYNC_TOKEN);
+      if (authResult.authorized === false) {
+        return jsonResponse({ error: authResult.error }, authResult.status);
+      }
+      const items = await listAdminBanners(db);
+      return jsonResponse({ items }, 200);
+    }
+
+    if (pathname === '/api/admin/banners' && request.method === 'POST') {
+      const authResult = verifySyncAuth(request.headers, env.ADMIN_SYNC_TOKEN);
+      if (authResult.authorized === false) {
+        return jsonResponse({ error: authResult.error }, authResult.status);
+      }
+      let body: BannerMutationInput;
+      try {
+        body = (await request.json()) as BannerMutationInput;
+      } catch {
+        return jsonResponse({ error: 'Invalid JSON request body' }, 400);
+      }
+      const result = await createAdminBanner(db, body);
+      if (!result.ok) {
+        return jsonResponse({ error: result.error }, result.status);
+      }
+      return jsonResponse({ item: result.item }, 201);
+    }
+
+    if (pathname === '/api/admin/banners/reorder' && request.method === 'POST') {
+      const authResult = verifySyncAuth(request.headers, env.ADMIN_SYNC_TOKEN);
+      if (authResult.authorized === false) {
+        return jsonResponse({ error: authResult.error }, authResult.status);
+      }
+      let body: { ids?: unknown };
+      try {
+        body = (await request.json()) as { ids?: unknown };
+      } catch {
+        return jsonResponse({ error: 'Invalid JSON request body' }, 400);
+      }
+      if (!Array.isArray(body?.ids)) {
+        return jsonResponse({ error: 'ids array is required' }, 400);
+      }
+      const items = await reorderAdminBanners(
+        db,
+        body.ids.filter((v): v is string => typeof v === 'string')
+      );
+      return jsonResponse({ items }, 200);
+    }
+
+    const adminBannerMatch = pathname.match(/^\/api\/admin\/banners\/([^/]+)$/);
+    if (adminBannerMatch) {
+      const authResult = verifySyncAuth(request.headers, env.ADMIN_SYNC_TOKEN);
+      if (authResult.authorized === false) {
+        return jsonResponse({ error: authResult.error }, authResult.status);
+      }
+      const bannerId = decodeURIComponent(adminBannerMatch[1]);
+
+      if (request.method === 'PUT') {
+        let body: BannerMutationInput;
+        try {
+          body = (await request.json()) as BannerMutationInput;
+        } catch {
+          return jsonResponse({ error: 'Invalid JSON request body' }, 400);
+        }
+        const result = await updateAdminBanner(db, bannerId, body);
+        if (!result.ok) {
+          return jsonResponse({ error: result.error }, result.status);
+        }
+        return jsonResponse({ item: result.item }, 200);
+      }
+
+      if (request.method === 'DELETE') {
+        const deleted = await deleteAdminBanner(db, bannerId);
+        if (!deleted) {
+          return jsonResponse({ error: 'Banner not found' }, 404);
+        }
+        return jsonResponse({ ok: true }, 200);
+      }
     }
 
     return jsonResponse({ error: 'Not Found' }, 404);

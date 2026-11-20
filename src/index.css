@@ -8,8 +8,8 @@
   }
 
   body {
-    background-color: #f8fafc;
-    color: #0f172a;
+    background-color: #fafafa;
+    color: #18181b;
     overflow-x: clip;
   }
 }
@@ -50,16 +50,16 @@
 }
 
 .mini-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgba(100, 116, 139, 0.22);
+  background-color: rgba(113, 113, 122, 0.24);
   border-radius: 9999px;
 }
 
 .mini-scrollbar:hover::-webkit-scrollbar-thumb {
-  background-color: rgba(100, 116, 139, 0.38);
+  background-color: rgba(113, 113, 122, 0.42);
 }
 
 .mini-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(100, 116, 139, 0.58);
+  background-color: rgba(113, 113, 122, 0.62);
 }
 
 /* Minimal, trackless, buttonless scrollbar for Chromium/Safari */
@@ -88,29 +88,29 @@ html::-webkit-scrollbar-corner,
 
 html::-webkit-scrollbar-thumb,
 ::-webkit-scrollbar-thumb {
-  background-color: rgba(100, 116, 139, 0.28);
+  background-color: rgba(113, 113, 122, 0.28);
   border-radius: 9999px;
 }
 
 html::-webkit-scrollbar-thumb:hover,
 ::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(100, 116, 139, 0.52);
+  background-color: rgba(113, 113, 122, 0.52);
 }
 
 html::-webkit-scrollbar-thumb:active,
 ::-webkit-scrollbar-thumb:active {
-  background-color: rgba(100, 116, 139, 0.7);
+  background-color: rgba(113, 113, 122, 0.72);
 }
 
 /* Firefox fallback without overriding Chromium ::-webkit-scrollbar */
 @supports not selector(::-webkit-scrollbar) {
   html {
     scrollbar-width: thin;
-    scrollbar-color: rgba(100, 116, 139, 0.35) transparent;
+    scrollbar-color: rgba(113, 113, 122, 0.35) transparent;
   }
 
   .mini-scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: rgba(100, 116, 139, 0.25) transparent;
+    scrollbar-color: rgba(113, 113, 122, 0.25) transparent;
   }
 }

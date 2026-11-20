@@ -20,12 +20,12 @@ export function ProductImage({ src, alt, className = '', eager = false }: Produc
   if (hasError) {
     return (
       <div
-        className={`flex flex-col items-center justify-center gap-2 bg-slate-50 text-slate-400 p-4 rounded-lg ${className}`}
+        className={`flex flex-col items-center justify-center gap-2 bg-zinc-50 text-zinc-400 p-4 rounded-lg ${className}`}
         role="img"
         aria-label={alt}
       >
         <Cpu className="w-9 h-9 text-emerald-600/60" aria-hidden="true" />
-        <span className="text-xs text-slate-500 text-center line-clamp-2 max-w-[180px]">{alt}</span>
+        <span className="text-xs text-zinc-500 text-center line-clamp-2 max-w-[180px]">{alt}</span>
       </div>
     );
   }

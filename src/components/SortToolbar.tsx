@@ -96,13 +96,13 @@ export function SortToolbar({
   return (
     <div id="catalog-toolbar" className="space-y-3">
       {/* Horizontal Tabbed Sort Bar + Result Count */}
-      <div className="rounded-xl bg-white border border-slate-200 px-3 sm:px-4 flex flex-wrap items-center justify-between gap-2">
+      <div className="rounded-xl bg-white border border-zinc-200 px-3 sm:px-4 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar">
           {/* Mobile Filter Trigger */}
           <button
             type="button"
             onClick={onOpenMobileFilters}
-            className="lg:hidden inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 my-2 text-xs font-semibold text-slate-800 hover:border-emerald-600 cursor-pointer whitespace-nowrap shrink-0"
+            className="lg:hidden inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 my-2 text-xs font-semibold text-zinc-800 hover:border-emerald-600 cursor-pointer whitespace-nowrap shrink-0"
           >
             <SlidersHorizontal className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
             <span>فیلترها</span>
@@ -113,8 +113,8 @@ export function SortToolbar({
             )}
           </button>
 
-          <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-500 pl-2 whitespace-nowrap shrink-0">
-            <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
+          <div className="hidden sm:flex items-center gap-1.5 text-xs text-zinc-500 pl-2 whitespace-nowrap shrink-0">
+            <ArrowUpDown className="w-3.5 h-3.5 text-zinc-400" aria-hidden="true" />
             <span>مرتب‌سازی:</span>
           </div>
 
@@ -131,7 +131,7 @@ export function SortToolbar({
                   className={`px-2.5 sm:px-3 py-3 text-xs sm:text-sm whitespace-nowrap shrink-0 border-b-2 transition-colors cursor-pointer ${
                     active
                       ? 'border-emerald-600 text-emerald-700 font-semibold'
-                      : 'border-transparent text-slate-600 hover:text-slate-900 font-medium'
+                      : 'border-transparent text-zinc-600 hover:text-zinc-900 font-medium'
                   }`}
                 >
                   {option.label}
@@ -141,7 +141,7 @@ export function SortToolbar({
           </div>
         </div>
 
-        <div className="py-2 text-xs sm:text-sm text-slate-500 tabular-nums whitespace-nowrap shrink-0">
+        <div className="py-2 text-xs sm:text-sm text-zinc-500 tabular-nums whitespace-nowrap shrink-0">
           {toPersianDigits(totalResults)} کالا
         </div>
       </div>
@@ -152,16 +152,16 @@ export function SortToolbar({
           aria-label="فیلترهای فعال"
           className="flex flex-wrap items-center gap-2 text-xs"
         >
-          <span className="text-slate-500 font-medium">فیلترهای فعال:</span>
+          <span className="text-zinc-500 font-medium">فیلترهای فعال:</span>
           {activeChips.map((chip) => (
             <button
               key={chip.key}
               type="button"
               onClick={chip.onRemove}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-slate-700 hover:border-red-300 hover:text-red-700 transition-colors cursor-pointer tabular-nums"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-zinc-700 hover:border-red-300 hover:text-red-700 transition-colors cursor-pointer tabular-nums"
             >
               <span>{chip.label}</span>
-              <X className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
+              <X className="w-3.5 h-3.5 text-zinc-400" aria-hidden="true" />
             </button>
           ))}
           <button

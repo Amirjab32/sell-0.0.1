@@ -5,20 +5,29 @@ import path from 'node:path';
 import { createServer as createViteServer } from 'vite';
 import { handleApiRequest } from './server/api';
 import { LocalD1Database } from './server/d1-local';
-import { seedDevDatabaseIfEmpty } from './server/dev-seed';
+import { seedDevBannersIfEmpty, seedDevDatabaseIfEmpty } from './server/dev-seed';
 
 const PORT = 3000;
 const appEnv = process.env.APP_ENV || (process.env.NODE_ENV === 'production' ? 'production' : 'development');
 const sqlitePath = process.env.LOCAL_SQLITE_PATH || path.resolve(process.cwd(), '.data/local.db');
-const migrationPath = path.resolve(process.cwd(), 'migrations/0001_init.sql');
+const migrationsDir = path.resolve(process.cwd(), 'migrations');
 
 async function startServer() {
   const db = new LocalD1Database(sqlitePath);
-  db.applyMigration(migrationPath);
+  if (fs.existsSync(migrationsDir)) {
+    const migrationFiles = fs
+      .readdirSync(migrationsDir)
+      .filter((f) => f.endsWith('.sql'))
+      .sort();
+    for (const file of migrationFiles) {
+      db.applyMigration(path.join(migrationsDir, file));
+    }
+  }
 
   // Seed sample hardware data ONLY in local development when the database is empty
   if (appEnv !== 'production') {
     await seedDevDatabaseIfEmpty(db);
+    await seedDevBannersIfEmpty(db);
   }
 
   const app = express();

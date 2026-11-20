@@ -1,3 +1,4 @@
+import { ensureHeroBannersTable } from './banners';
 import type { D1DatabaseLike } from './db-types';
 
 interface SeedProduct {
@@ -383,4 +384,52 @@ export async function seedDevDatabaseIfEmpty(db: D1DatabaseLike): Promise<void> 
     )
     .bind('dev-initial-seed', now, DEV_SEED_PRODUCTS.length, DEV_SEED_PRODUCTS.length, 0, 'success', 'Local dev seed')
     .run();
+}
+
+const DEV_SEED_BANNERS = [
+  {
+    id: 'banner-seed-gpu',
+    title: 'کارت‌های گرافیک و قطعات اصلی کامپیوتر',
+    image_url: '/images/banner-gpu.svg',
+    target_type: 'category',
+    target_value: 'قطعات اصلی کامپیوتر',
+    sort_order: 0,
+  },
+  {
+    id: 'banner-seed-laptop',
+    title: 'لپ‌تاپ‌های گیمینگ و مهندسی',
+    image_url: '/images/banner-laptop.svg',
+    target_type: 'category',
+    target_value: 'لپ‌تاپ',
+    sort_order: 1,
+  },
+  {
+    id: 'banner-seed-monitor',
+    title: 'مانیتورهای OLED و گیمینگ',
+    image_url: '/images/banner-monitor.svg',
+    target_type: 'category',
+    target_value: 'مانیتور',
+    sort_order: 2,
+  },
+];
+
+export async function seedDevBannersIfEmpty(db: D1DatabaseLike): Promise<void> {
+  await ensureHeroBannersTable(db);
+  const countRow = await db.prepare('SELECT COUNT(*) AS count FROM hero_banners').first<{ count: number }>();
+  if (Number(countRow?.count ?? 0) > 0) {
+    return;
+  }
+
+  const now = new Date().toISOString();
+  const statements = DEV_SEED_BANNERS.map((b) =>
+    db
+      .prepare(
+        `INSERT INTO hero_banners (
+          id, title, image_url, target_type, target_value, sort_order, is_active, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)`
+      )
+      .bind(b.id, b.title, b.image_url, b.target_type, b.target_value, b.sort_order, now, now)
+  );
+
+  await db.batch(statements);
 }

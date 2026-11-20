@@ -243,3 +243,118 @@ test('Sync endpoint enforces Golden Rule, manual_price_lock, secret stripping, a
   assert.equal(health.ok, true);
   assert.ok(health.lastSyncedAt);
 });
+
+test('Hero banner endpoints enforce admin auth, support image uploads, and serve public active slides', async () => {
+  const db = createTestDb();
+  const env = { ADMIN_SYNC_TOKEN: 'banner-admin-secret' };
+
+  // Buyers / unauthenticated requests must be rejected on all admin banner endpoints
+  const unauthGet = await handleApiRequest(new Request('http://localhost/api/admin/banners'), db, env);
+  assert.equal(unauthGet.status, 401);
+
+  const unauthPost = await handleApiRequest(
+    new Request('http://localhost/api/admin/banners', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image_url: '/images/banner-gpu.svg' }),
+    }),
+    db,
+    env
+  );
+  assert.equal(unauthPost.status, 401);
+
+  // Admin creates an active uploaded data-URI banner linked to a category tab
+  const tinyPngBase64 =
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
+  const createRes = await handleApiRequest(
+    new Request('http://localhost/api/admin/banners', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Admin-Sync-Token': 'banner-admin-secret',
+      },
+      body: JSON.stringify({
+        title: 'بنر کارت گرافیک',
+        image_url: `data:image/png;base64,${tinyPngBase64}`,
+        target_type: 'category',
+        target_value: 'قطعات اصلی کامپیوتر',
+        is_active: true,
+      }),
+    }),
+    db,
+    env
+  );
+  assert.equal(createRes.status, 201);
+  const createdJson = (await createRes.json()) as { item: { id: string; image_url: string } };
+  assert.ok(createdJson.item.id);
+  assert.ok(createdJson.item.image_url.startsWith('/api/banners/image/'));
+
+  // Admin creates an inactive banner (must stay hidden from public /api/banners)
+  const inactiveRes = await handleApiRequest(
+    new Request('http://localhost/api/admin/banners', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer banner-admin-secret',
+      },
+      body: JSON.stringify({
+        title: 'بنر پیش‌نویس مخفی',
+        image_url: '/images/banner-laptop.svg',
+        target_type: 'category',
+        target_value: 'لپ‌تاپ',
+        is_active: false,
+      }),
+    }),
+    db,
+    env
+  );
+  assert.equal(inactiveRes.status, 201);
+
+  // Public /api/banners returns only active slides
+  const publicRes = await handleApiRequest(new Request('http://localhost/api/banners'), db, env);
+  assert.equal(publicRes.status, 200);
+  const publicJson = (await publicRes.json()) as {
+    items: Array<{ id: string; image_url: string; target_type: string; target_value: string }>;
+  };
+  assert.equal(publicJson.items.length, 1);
+  assert.equal(publicJson.items[0].target_type, 'category');
+  assert.equal(publicJson.items[0].target_value, 'قطعات اصلی کامپیوتر');
+
+  // Public image binary endpoint returns PNG bytes
+  const imgRes = await handleApiRequest(
+    new Request(`http://localhost${publicJson.items[0].image_url}`),
+    db,
+    env
+  );
+  assert.equal(imgRes.status, 200);
+  assert.equal(imgRes.headers.get('Content-Type'), 'image/png');
+  const buf = new Uint8Array(await imgRes.arrayBuffer());
+  assert.ok(buf.length > 10);
+
+  // Admin lists both banners (active + inactive)
+  const adminListRes = await handleApiRequest(
+    new Request('http://localhost/api/admin/banners', {
+      headers: { 'X-Admin-Sync-Token': 'banner-admin-secret' },
+    }),
+    db,
+    env
+  );
+  assert.equal(adminListRes.status, 200);
+  const adminList = (await adminListRes.json()) as { items: Array<{ id: string }> };
+  assert.equal(adminList.items.length, 2);
+
+  // Admin deletes first banner
+  const delRes = await handleApiRequest(
+    new Request(`http://localhost/api/admin/banners/${encodeURIComponent(createdJson.item.id)}`, {
+      method: 'DELETE',
+      headers: { 'X-Admin-Sync-Token': 'banner-admin-secret' },
+    }),
+    db,
+    env
+  );
+  assert.equal(delRes.status, 200);
+
+  const afterDelPublic = await handleApiRequest(new Request('http://localhost/api/banners'), db, env);
+  const afterDelJson = (await afterDelPublic.json()) as { items: unknown[] };
+  assert.equal(afterDelJson.items.length, 0);
+});

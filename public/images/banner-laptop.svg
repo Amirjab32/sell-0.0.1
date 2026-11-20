@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 360" fill="none">
+  <rect width="1280" height="360" fill="#18181B"/>
+  <rect x="0" y="0" width="520" height="360" fill="#27272A"/>
+  <rect x="520" y="0" width="3" height="360" fill="#059669"/>
+
+  <!-- Geometric Gaming Laptop Illustration -->
+  <g transform="translate(88, 62)">
+    <!-- Screen -->
+    <rect x="34" y="10" width="300" height="186" rx="12" fill="#09090B" stroke="#52525B" stroke-width="3"/>
+    <rect x="46" y="22" width="276" height="162" rx="6" fill="#18181B"/>
+    <!-- Screen artwork -->
+    <path d="M46 144 L156 70 L236 120 L322 52 L322 184 L46 184 Z" fill="#059669" fill-opacity="0.22"/>
+    <path d="M46 144 L156 70 L236 120 L322 52" stroke="#10B981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="272" cy="54" r="16" fill="#059669" fill-opacity="0.35" stroke="#10B981" stroke-width="2"/>
+    <!-- Base keyboard deck -->
+    <path d="M10 198 L358 198 L382 232 C384 236 381 240 376 240 L-8 240 C-13 240 -16 236 -14 232 Z" fill="#3F3F46" stroke="#52525B" stroke-width="2"/>
+    <rect x="136" y="216" width="96" height="14" rx="4" fill="#27272A"/>
+  </g>
+
+  <!-- Right Side Editorial Text -->
+  <text x="1140" y="96" text-anchor="end" fill="#34D399" font-family="Vazirmatn, Tahoma, sans-serif" font-size="20" font-weight="700">نسل جدید پردازنده و گرافیک موبایل</text>
+  <text x="1140" y="156" text-anchor="end" fill="#FFFFFF" font-family="Vazirmatn, Tahoma, sans-serif" font-size="44" font-weight="800">لپ‌تاپ‌های گیمینگ و مهندسی</text>
+  <text x="1140" y="206" text-anchor="end" fill="#A1A1AA" font-family="Vazirmatn, Tahoma, sans-serif" font-size="20" font-weight="500">نمایشگرهای ۲۴۰ هرتز با گارانتی معتبر و قیمت به‌روز</text>
+
+  <!-- CTA -->
+  <g transform="translate(940, 246)">
+    <rect width="200" height="46" rx="10" fill="#059669"/>
+    <path d="M36 17 L28 23 L36 29" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="176" y="29" text-anchor="end" fill="#FFFFFF" font-family="Vazirmatn, Tahoma, sans-serif" font-size="16" font-weight="700">مشاهده لپ‌تاپ‌ها</text>
+  </g>
+</svg>

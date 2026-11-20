@@ -37,16 +37,16 @@ function AccordionSection({ title, defaultOpen = true, children }: AccordionSect
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div className="border-b border-slate-100 last:border-b-0">
+    <div className="border-b border-zinc-100 last:border-b-0">
       <button
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((prev) => !prev)}
-        className="w-full flex items-center justify-between px-4 py-3.5 text-sm font-semibold text-slate-900 hover:bg-slate-50/70 transition-colors cursor-pointer"
+        className="w-full flex items-center justify-between px-4 py-3.5 text-sm font-semibold text-zinc-900 hover:bg-zinc-50/70 transition-colors cursor-pointer"
       >
         <span>{title}</span>
         <ChevronDown
-          className={`w-4 h-4 text-slate-400 transition-transform duration-150 ${
+          className={`w-4 h-4 text-zinc-400 transition-transform duration-150 ${
             open ? 'rotate-180' : ''
           }`}
           aria-hidden="true"
@@ -83,10 +83,10 @@ export function FilterSidebar({
   const hasPriceApplied = Boolean(appliedMinPrice || appliedMaxPrice);
 
   const filterBody = (
-    <div className="divide-y divide-slate-100">
+    <div className="divide-y divide-zinc-100">
       {/* Availability Switch */}
       <div className="px-4 py-3.5 flex items-center justify-between gap-3">
-        <span className="text-sm font-semibold text-slate-900">فقط کالاهای موجود</span>
+        <span className="text-sm font-semibold text-zinc-900">فقط کالاهای موجود</span>
         <button
           type="button"
           role="switch"
@@ -94,7 +94,7 @@ export function FilterSidebar({
           aria-label="فقط کالاهای موجود"
           onClick={() => onOnlyAvailableChange(!onlyAvailable)}
           className={`h-6 w-11 rounded-full p-0.5 transition-colors flex items-center cursor-pointer ${
-            onlyAvailable ? 'bg-emerald-600 justify-start' : 'bg-slate-200 justify-end'
+            onlyAvailable ? 'bg-emerald-600 justify-start' : 'bg-zinc-200 justify-end'
           }`}
         >
           <span className="h-5 w-5 rounded-full bg-white shadow-sm" />
@@ -110,7 +110,7 @@ export function FilterSidebar({
             className={`w-full flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs sm:text-sm text-right transition-colors cursor-pointer ${
               selectedCategory === ''
                 ? 'bg-emerald-50 text-emerald-700 font-semibold'
-                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900'
             }`}
           >
             <span>همه دسته‌بندی‌ها</span>
@@ -125,11 +125,11 @@ export function FilterSidebar({
                 className={`w-full flex items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-xs sm:text-sm text-right transition-colors cursor-pointer ${
                   active
                     ? 'bg-emerald-50 text-emerald-700 font-semibold'
-                    : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+                    : 'text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900'
                 }`}
               >
                 <span className="truncate">{cat.name}</span>
-                <span className="text-xs text-slate-400 tabular-nums shrink-0">
+                <span className="text-xs text-zinc-400 tabular-nums shrink-0">
                   {toPersianDigits(cat.count)}
                 </span>
               </button>
@@ -147,7 +147,7 @@ export function FilterSidebar({
             className={`w-full flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs sm:text-sm text-right transition-colors cursor-pointer ${
               selectedBrand === ''
                 ? 'bg-emerald-50 text-emerald-700 font-semibold'
-                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900'
             }`}
           >
             <span>همه برندها</span>
@@ -162,11 +162,11 @@ export function FilterSidebar({
                 className={`w-full flex items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-xs sm:text-sm text-right transition-colors cursor-pointer ${
                   active
                     ? 'bg-emerald-50 text-emerald-700 font-semibold'
-                    : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+                    : 'text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900'
                 }`}
               >
                 <span className="truncate">{brand.name}</span>
-                <span className="text-xs text-slate-400 tabular-nums shrink-0">
+                <span className="text-xs text-zinc-400 tabular-nums shrink-0">
                   {toPersianDigits(brand.count)}
                 </span>
               </button>
@@ -186,7 +186,7 @@ export function FilterSidebar({
         >
           <div className="space-y-2">
             <div>
-              <label htmlFor="sidebar-min-price" className="block text-[11px] text-slate-500 mb-1">
+              <label htmlFor="sidebar-min-price" className="block text-[11px] text-zinc-500 mb-1">
                 از مبلغ
               </label>
               <input
@@ -197,12 +197,12 @@ export function FilterSidebar({
                 value={minPriceInput}
                 onChange={(e) => onMinPriceChange(e.target.value)}
                 placeholder="مثلاً ۱۰۰۰۰۰۰۰"
-                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-emerald-600 focus:outline-none tabular-nums"
+                className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-400 focus:bg-white focus:border-emerald-600 focus:outline-none tabular-nums"
               />
             </div>
 
             <div>
-              <label htmlFor="sidebar-max-price" className="block text-[11px] text-slate-500 mb-1">
+              <label htmlFor="sidebar-max-price" className="block text-[11px] text-zinc-500 mb-1">
                 تا مبلغ
               </label>
               <input
@@ -213,13 +213,13 @@ export function FilterSidebar({
                 value={maxPriceInput}
                 onChange={(e) => onMaxPriceChange(e.target.value)}
                 placeholder="مثلاً ۱۵۰۰۰۰۰۰۰"
-                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-emerald-600 focus:outline-none tabular-nums"
+                className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-400 focus:bg-white focus:border-emerald-600 focus:outline-none tabular-nums"
               />
             </div>
           </div>
 
           {hasPriceApplied && (
-            <div className="text-[11px] text-slate-500 tabular-nums">
+            <div className="text-[11px] text-zinc-500 tabular-nums">
               اعمال‌شده:{' '}
               {appliedMinPrice ? `از ${formatTomanNumber(Number(appliedMinPrice))}` : 'بدون کف'} تا{' '}
               {appliedMaxPrice ? `${formatTomanNumber(Number(appliedMaxPrice))} تومان` : 'بدون سقف'}
@@ -237,7 +237,7 @@ export function FilterSidebar({
               <button
                 type="button"
                 onClick={onClearPriceRange}
-                className="rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-600 hover:text-slate-900 hover:border-slate-300 transition-colors cursor-pointer"
+                className="rounded-lg border border-zinc-200 bg-white px-2.5 py-2 text-xs text-zinc-600 hover:text-zinc-900 hover:border-zinc-300 transition-colors cursor-pointer"
               >
                 حذف
               </button>
@@ -252,9 +252,9 @@ export function FilterSidebar({
     <>
       {/* Desktop Sticky Accordion Sidebar */}
       <aside aria-label="فیلترهای محصولات" className="hidden lg:block lg:col-span-3">
-        <div className="sticky top-20 rounded-xl bg-white border border-slate-200 overflow-hidden">
-          <div className="px-4 py-3.5 border-b border-slate-100 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
+        <div className="sticky top-20 rounded-xl bg-white border border-zinc-200 overflow-hidden">
+          <div className="px-4 py-3.5 border-b border-zinc-100 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-sm font-bold text-zinc-900">
               <SlidersHorizontal className="w-4 h-4 text-emerald-600" aria-hidden="true" />
               <span>فیلترها</span>
             </div>
@@ -282,13 +282,13 @@ export function FilterSidebar({
           aria-label="فیلتر محصولات"
         >
           <div
-            className="fixed inset-0 bg-slate-900/50 backdrop-blur-[1px]"
+            className="fixed inset-0 bg-zinc-900/50 backdrop-blur-[1px]"
             onClick={onCloseMobile}
             aria-hidden="true"
           />
           <div className="relative z-10 w-full max-w-xs bg-white h-full flex flex-col shadow-2xl">
-            <div className="px-4 py-3.5 border-b border-slate-200 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
+            <div className="px-4 py-3.5 border-b border-zinc-200 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm font-bold text-zinc-900">
                 <SlidersHorizontal className="w-4 h-4 text-emerald-600" aria-hidden="true" />
                 <span>فیلتر محصولات</span>
               </div>
@@ -306,7 +306,7 @@ export function FilterSidebar({
                   type="button"
                   onClick={onCloseMobile}
                   aria-label="بستن پنل فیلتر"
-                  className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900 cursor-pointer"
+                  className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -315,7 +315,7 @@ export function FilterSidebar({
 
             <div className="flex-1 overflow-y-auto mini-scrollbar overscroll-contain">{filterBody}</div>
 
-            <div className="p-4 border-t border-slate-200 bg-slate-50">
+            <div className="p-4 border-t border-zinc-200 bg-zinc-50">
               <button
                 type="button"
                 onClick={onCloseMobile}

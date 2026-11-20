@@ -1,19 +1,47 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { AdminBannerManager } from './components/AdminBannerManager';
 import { FilterSidebar } from './components/FilterSidebar';
 import { Footer } from './components/Footer';
 import { Header } from './components/Header';
-import { HeroFeatured } from './components/HeroFeatured';
+import { HeroBannerSlider } from './components/HeroBannerSlider';
 import { ConsultationModal, OrderInquiryModal } from './components/Modals';
 import { ProductCard } from './components/ProductCard';
 import { ProductDetailPage } from './components/ProductDetailPage';
 import { SortToolbar } from './components/SortToolbar';
 import { CatalogSkeleton, EmptyCatalogState, ErrorState } from './components/States';
 import { toPersianDigits } from './lib/format';
-import type { CatalogResponse, CatalogSort, PublicProduct } from './types/catalog';
+import type { CatalogResponse, CatalogSort, PublicBanner, PublicProduct } from './types/catalog';
 
 function extractProductSlugFromPath(pathname: string): string | null {
   const match = pathname.match(/^\/product\/([^/]+)\/?$/);
   return match ? decodeURIComponent(match[1]) : null;
+}
+
+interface ParsedUrlFilters {
+  category: string;
+  brand: string;
+  q: string;
+  onlyAvailable: boolean;
+  sort: CatalogSort;
+  openConsultation: boolean;
+}
+
+function parseFiltersFromUrlSearch(search: string): ParsedUrlFilters {
+  const params = new URLSearchParams(search);
+  const rawSort = params.get('sort');
+  const validSort: CatalogSort =
+    rawSort === 'cheapest' || rawSort === 'expensive' || rawSort === 'newest' || rawSort === 'in_stock_first'
+      ? rawSort
+      : 'in_stock_first';
+
+  return {
+    category: params.get('category') ?? '',
+    brand: params.get('brand') ?? '',
+    q: params.get('q') ?? '',
+    onlyAvailable: params.get('onlyAvailable') === 'true' || params.get('onlyAvailable') === '1',
+    sort: validSort,
+    openConsultation: params.get('action') === 'consultation',
+  };
 }
 
 export default function App() {
@@ -21,49 +49,107 @@ export default function App() {
     typeof window !== 'undefined' ? window.location.pathname : '/'
   );
 
-  // Filter & Sort states
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedBrand, setSelectedBrand] = useState('');
-  const [onlyAvailable, setOnlyAvailable] = useState(false);
+  const initialFilters: ParsedUrlFilters =
+    typeof window !== 'undefined'
+      ? parseFiltersFromUrlSearch(window.location.search)
+      : {
+          category: '',
+          brand: '',
+          q: '',
+          onlyAvailable: false,
+          sort: 'in_stock_first',
+          openConsultation: false,
+        };
+
+  // Filter & Sort states (hydrating initial URL params for banner links and deep links)
+  const [searchQuery, setSearchQuery] = useState(initialFilters.q);
+  const [debouncedQuery, setDebouncedQuery] = useState(initialFilters.q.trim());
+  const [selectedCategory, setSelectedCategory] = useState(initialFilters.category);
+  const [selectedBrand, setSelectedBrand] = useState(initialFilters.brand);
+  const [onlyAvailable, setOnlyAvailable] = useState(initialFilters.onlyAvailable);
   const [minPriceInput, setMinPriceInput] = useState('');
   const [maxPriceInput, setMaxPriceInput] = useState('');
   const [appliedMinPrice, setAppliedMinPrice] = useState('');
   const [appliedMaxPrice, setAppliedMaxPrice] = useState('');
-  const [sort, setSort] = useState<CatalogSort>('in_stock_first');
+  const [sort, setSort] = useState<CatalogSort>(initialFilters.sort);
   const [page, setPage] = useState(1);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   // Data states
   const [catalog, setCatalog] = useState<CatalogResponse | null>(null);
-  const [featuredProducts, setFeaturedProducts] = useState<PublicProduct[]>([]);
+  const [banners, setBanners] = useState<PublicBanner[]>([]);
+  const [bannersLoading, setBannersLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Modals
-  const [consultOpen, setConsultOpen] = useState(false);
+  const [consultOpen, setConsultOpen] = useState(initialFilters.openConsultation);
   const [inquiryProduct, setInquiryProduct] = useState<PublicProduct | null>(null);
 
   const catalogSectionRef = useRef<HTMLElement | null>(null);
 
-  const productSlug = extractProductSlugFromPath(pathname);
+  const isAdminPage = pathname === '/admin' || pathname === '/admin/';
+  const productSlug = isAdminPage ? null : extractProductSlugFromPath(pathname);
+
+  const applyUrlFilters = useCallback((search: string) => {
+    const parsed = parseFiltersFromUrlSearch(search);
+    setSelectedCategory(parsed.category);
+    setSelectedBrand(parsed.brand);
+    setSearchQuery(parsed.q);
+    setDebouncedQuery(parsed.q.trim());
+    setOnlyAvailable(parsed.onlyAvailable);
+    setSort(parsed.sort);
+    setMinPriceInput('');
+    setMaxPriceInput('');
+    setAppliedMinPrice('');
+    setAppliedMaxPrice('');
+    setPage(1);
+    if (parsed.openConsultation) {
+      setConsultOpen(true);
+    }
+  }, []);
 
   // Browser history navigation listener
   useEffect(() => {
     const onPopState = () => {
-      setPathname(window.location.pathname);
+      const nextPath = window.location.pathname;
+      setPathname(nextPath);
+      if (nextPath !== '/admin' && nextPath !== '/admin/' && !extractProductSlugFromPath(nextPath)) {
+        applyUrlFilters(window.location.search);
+      }
     };
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
-  }, []);
+  }, [applyUrlFilters]);
 
-  const navigateTo = useCallback((nextPath: string) => {
-    if (window.location.pathname !== nextPath) {
-      window.history.pushState({}, '', nextPath);
-    }
-    setPathname(nextPath);
-  }, []);
+  const navigateTo = useCallback(
+    (nextTarget: string) => {
+      const resolved = new URL(nextTarget, window.location.origin);
+      const nextFull = `${resolved.pathname}${resolved.search}${resolved.hash}`;
+      const currentFull = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+      if (currentFull !== nextFull) {
+        window.history.pushState({}, '', nextFull);
+      }
+      setPathname(resolved.pathname);
+
+      const targetIsAdmin = resolved.pathname === '/admin' || resolved.pathname === '/admin/';
+      const targetIsProduct = Boolean(extractProductSlugFromPath(resolved.pathname));
+
+      if (!targetIsAdmin && !targetIsProduct) {
+        applyUrlFilters(resolved.search);
+        if (resolved.search && !resolved.searchParams.has('action')) {
+          setTimeout(() => {
+            catalogSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 60);
+        } else {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    },
+    [applyUrlFilters]
+  );
 
   // Debounce live search query for main catalog filtering
   useEffect(() => {
@@ -74,22 +160,25 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Fetch featured product for Hero spotlight
-  const fetchFeatured = useCallback(async () => {
+  // Fetch active hero banner slides
+  const fetchBanners = useCallback(async () => {
+    setBannersLoading(true);
     try {
-      const res = await fetch('/api/catalog?featured=1&limit=4&sort=in_stock_first');
+      const res = await fetch('/api/banners');
       if (res.ok) {
-        const json = (await res.json()) as CatalogResponse;
-        setFeaturedProducts(json.items);
+        const json = (await res.json()) as { items: PublicBanner[] };
+        setBanners(Array.isArray(json.items) ? json.items : []);
       }
     } catch {
-      // Non-blocking: main catalog error state handles connectivity errors
+      // Non-blocking: slider collapses cleanly if banner endpoint fails
+    } finally {
+      setBannersLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchFeatured();
-  }, [fetchFeatured]);
+    fetchBanners();
+  }, [fetchBanners]);
 
   // Fetch filtered catalog
   const fetchCatalog = useCallback(async () => {
@@ -130,10 +219,10 @@ export default function App() {
   ]);
 
   useEffect(() => {
-    if (!productSlug) {
+    if (!productSlug && !isAdminPage) {
       fetchCatalog();
     }
-  }, [productSlug, fetchCatalog]);
+  }, [productSlug, isAdminPage, fetchCatalog]);
 
   const hasActiveFilters = Boolean(
     debouncedQuery ||
@@ -141,7 +230,8 @@ export default function App() {
       selectedBrand ||
       onlyAvailable ||
       appliedMinPrice ||
-      appliedMaxPrice
+      appliedMaxPrice ||
+      sort !== 'in_stock_first'
   );
 
   const resetAllFilters = useCallback(() => {
@@ -160,9 +250,12 @@ export default function App() {
 
   const handleNavigateHome = useCallback(() => {
     resetAllFilters();
-    navigateTo('/');
+    if (`${window.location.pathname}${window.location.search}` !== '/') {
+      window.history.pushState({}, '', '/');
+    }
+    setPathname('/');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [navigateTo, resetAllFilters]);
+  }, [resetAllFilters]);
 
   const handleHeaderFilterSelect = useCallback(
     (opts: { category?: string; brand?: string; q?: string }) => {
@@ -171,36 +264,37 @@ export default function App() {
       const nextQ = opts.q ?? '';
       setSearchQuery(nextQ);
       setDebouncedQuery(nextQ);
+      setOnlyAvailable(false);
+      setSort('in_stock_first');
       setPage(1);
-      navigateTo('/');
+      if (`${window.location.pathname}${window.location.search}` !== '/') {
+        window.history.pushState({}, '', '/');
+      }
+      setPathname('/');
       setTimeout(() => {
         catalogSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 60);
     },
-    [navigateTo]
+    []
   );
 
-  const handleSubmitSearch = useCallback(
-    (val: string) => {
-      setSearchQuery(val);
-      setDebouncedQuery(val);
-      setPage(1);
-      navigateTo('/');
-      setTimeout(() => {
-        catalogSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 60);
-    },
-    [navigateTo]
-  );
-
-  const scrollToCatalog = () => {
-    catalogSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
+  const handleSubmitSearch = useCallback((val: string) => {
+    setSearchQuery(val);
+    setDebouncedQuery(val);
+    setPage(1);
+    if (`${window.location.pathname}${window.location.search}` !== '/') {
+      window.history.pushState({}, '', '/');
+    }
+    setPathname('/');
+    setTimeout(() => {
+      catalogSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 60);
+  }, []);
 
   const isDatabaseEmpty = Boolean(catalog && catalog.totalCatalogCount === 0);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-[#0F172A]">
+    <div className="min-h-screen flex flex-col bg-[#FAFAFA] text-zinc-900">
       <Header
         searchQuery={searchQuery}
         selectedCategory={selectedCategory}
@@ -213,7 +307,12 @@ export default function App() {
       />
 
       <main className="flex-1">
-        {productSlug ? (
+        {isAdminPage ? (
+          <AdminBannerManager
+            onNavigateHome={handleNavigateHome}
+            onBannersChanged={fetchBanners}
+          />
+        ) : productSlug ? (
           <ProductDetailPage
             slug={productSlug}
             onNavigateHome={handleNavigateHome}
@@ -223,13 +322,14 @@ export default function App() {
           />
         ) : (
           <div className="mx-auto max-w-7xl px-4 sm:px-6 py-5 sm:py-6 space-y-6">
-            {/* Compact Low-Height Intro + Spotlight Card */}
-            {!hasActiveFilters && !isDatabaseEmpty && (
-              <HeroFeatured
-                featuredProducts={featuredProducts}
-                onBrowseCatalog={scrollToCatalog}
-                onOpenConsultation={() => setConsultOpen(true)}
+            {/* Full-Width Rounded Hero Banner Carousel */}
+            {!hasActiveFilters && (!isDatabaseEmpty || banners.length > 0) && (
+              <HeroBannerSlider
+                banners={banners}
+                loading={bannersLoading}
+                onSelectFilter={handleHeaderFilterSelect}
                 onNavigateProduct={(slug) => navigateTo(`/product/${encodeURIComponent(slug)}`)}
+                onNavigatePath={navigateTo}
               />
             )}
 
@@ -243,7 +343,7 @@ export default function App() {
                     isDatabaseEmpty={true}
                     onResetFilters={resetAllFilters}
                     onRetry={() => {
-                      fetchFeatured();
+                      fetchBanners();
                       fetchCatalog();
                     }}
                   />
@@ -344,7 +444,7 @@ export default function App() {
                       <ErrorState
                         message={error}
                         onRetry={() => {
-                          fetchFeatured();
+                          fetchBanners();
                           fetchCatalog();
                         }}
                       />
@@ -353,7 +453,7 @@ export default function App() {
                         isDatabaseEmpty={false}
                         onResetFilters={resetAllFilters}
                         onRetry={() => {
-                          fetchFeatured();
+                          fetchBanners();
                           fetchCatalog();
                         }}
                       />
@@ -381,11 +481,11 @@ export default function App() {
                               type="button"
                               disabled={page <= 1}
                               onClick={() => setPage((p) => Math.max(1, p - 1))}
-                              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 disabled:opacity-40 hover:border-emerald-600 hover:text-emerald-700 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                              className="rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm text-zinc-700 disabled:opacity-40 hover:border-emerald-600 hover:text-emerald-700 transition-colors cursor-pointer disabled:cursor-not-allowed"
                             >
                               صفحه قبل
                             </button>
-                            <span className="px-3 text-sm text-slate-500 tabular-nums">
+                            <span className="px-3 text-sm text-zinc-500 tabular-nums">
                               صفحه {toPersianDigits(page)} از{' '}
                               {toPersianDigits(catalog.pagination.totalPages)}
                             </span>
@@ -395,7 +495,7 @@ export default function App() {
                               onClick={() =>
                                 setPage((p) => Math.min(catalog.pagination.totalPages, p + 1))
                               }
-                              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 disabled:opacity-40 hover:border-emerald-600 hover:text-emerald-700 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                              className="rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm text-zinc-700 disabled:opacity-40 hover:border-emerald-600 hover:text-emerald-700 transition-colors cursor-pointer disabled:cursor-not-allowed"
                             >
                               صفحه بعد
                             </button>

@@ -2,13 +2,13 @@ export const DEFAULT_PRODUCT_PLACEHOLDER_SVG =
   'data:image/svg+xml;utf8,' +
   encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" fill="none">
-      <rect width="400" height="400" fill="#F8FAFC"/>
-      <rect x="32" y="32" width="336" height="336" rx="16" stroke="#E2E8F0" stroke-width="1.5" fill="#FFFFFF"/>
-      <rect x="135" y="138" width="130" height="86" rx="10" stroke="#CBD5E1" stroke-width="2" fill="#F8FAFC"/>
+      <rect width="400" height="400" fill="#FAFAFA"/>
+      <rect x="32" y="32" width="336" height="336" rx="16" stroke="#E4E4E7" stroke-width="1.5" fill="#FFFFFF"/>
+      <rect x="135" y="138" width="130" height="86" rx="10" stroke="#D4D4D8" stroke-width="2" fill="#FAFAFA"/>
       <circle cx="175" cy="181" r="20" stroke="#059669" stroke-width="2" stroke-opacity="0.55"/>
       <circle cx="225" cy="181" r="20" stroke="#059669" stroke-width="2" stroke-opacity="0.35"/>
-      <path d="M150 248H250" stroke="#CBD5E1" stroke-width="2" stroke-linecap="round"/>
-      <path d="M172 262H228" stroke="#E2E8F0" stroke-width="2" stroke-linecap="round"/>
+      <path d="M150 248H250" stroke="#D4D4D8" stroke-width="2" stroke-linecap="round"/>
+      <path d="M172 262H228" stroke="#E4E4E7" stroke-width="2" stroke-linecap="round"/>
     </svg>`
   );
 

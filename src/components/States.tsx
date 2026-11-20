@@ -9,19 +9,19 @@ export function CatalogSkeleton() {
       {Array.from({ length: 6 }).map((_, idx) => (
         <div
           key={idx}
-          className="rounded-xl bg-white border border-slate-200 overflow-hidden animate-pulse"
+          className="rounded-xl bg-white border border-zinc-200 overflow-hidden animate-pulse"
         >
-          <div className="aspect-square bg-slate-50 border-b border-slate-100" />
+          <div className="aspect-square bg-zinc-50 border-b border-zinc-100" />
           <div className="p-4 space-y-3">
             <div className="flex justify-between">
-              <div className="h-3 w-16 rounded bg-slate-200" />
-              <div className="h-3 w-14 rounded bg-slate-200" />
+              <div className="h-3 w-16 rounded bg-zinc-200" />
+              <div className="h-3 w-14 rounded bg-zinc-200" />
             </div>
-            <div className="h-4 w-full rounded bg-slate-200" />
-            <div className="h-4 w-3/4 rounded bg-slate-200" />
-            <div className="h-3 w-28 rounded bg-slate-100" />
-            <div className="pt-3 border-t border-slate-100 flex justify-end">
-              <div className="h-5 w-28 rounded bg-slate-200" />
+            <div className="h-4 w-full rounded bg-zinc-200" />
+            <div className="h-4 w-3/4 rounded bg-zinc-200" />
+            <div className="h-3 w-28 rounded bg-zinc-100" />
+            <div className="pt-3 border-t border-zinc-100 flex justify-end">
+              <div className="h-5 w-28 rounded bg-zinc-200" />
             </div>
           </div>
         </div>
@@ -43,18 +43,18 @@ export function EmptyCatalogState({
 }: EmptyCatalogStateProps) {
   if (isDatabaseEmpty) {
     return (
-      <div className="rounded-xl bg-white border border-slate-200 p-8 sm:p-10 text-center max-w-2xl mx-auto">
+      <div className="rounded-xl bg-white border border-zinc-200 p-8 sm:p-10 text-center max-w-2xl mx-auto">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700">
           <Database className="w-6 h-6" aria-hidden="true" />
         </div>
-        <h2 className="mt-4 text-lg font-bold text-slate-900">
+        <h2 className="mt-4 text-lg font-bold text-zinc-900">
           ویترین آماده همگام‌سازی اولیه است
         </h2>
-        <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+        <p className="mt-2 text-sm text-zinc-600 leading-relaxed">
           در حال حاضر هیچ محصولی در پایگاه داده ثبت نشده است. برای انتشار کاتالوگ، همگام‌سازی اولیه را از سمت سرور اجرا کنید.
         </p>
         <div
-          className="mt-4 rounded-lg bg-slate-50 border border-slate-200 p-3 text-left text-xs font-mono text-slate-700 overflow-x-auto no-scrollbar"
+          className="mt-4 rounded-lg bg-zinc-50 border border-zinc-200 p-3 text-left text-xs font-mono text-zinc-700 overflow-x-auto no-scrollbar"
           dir="ltr"
         >
           POST /api/sync/import-from-source
@@ -74,14 +74,14 @@ export function EmptyCatalogState({
   }
 
   return (
-    <div className="rounded-xl bg-white border border-slate-200 p-8 sm:p-10 text-center max-w-lg mx-auto">
-      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-slate-50 border border-slate-200 text-slate-500">
+    <div className="rounded-xl bg-white border border-zinc-200 p-8 sm:p-10 text-center max-w-lg mx-auto">
+      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-50 border border-zinc-200 text-zinc-500">
         <SearchX className="w-6 h-6" aria-hidden="true" />
       </div>
-      <h3 className="mt-4 text-base sm:text-lg font-bold text-slate-900">
+      <h3 className="mt-4 text-base sm:text-lg font-bold text-zinc-900">
         محصولی با این فیلترها پیدا نشد
       </h3>
-      <p className="mt-2 text-xs sm:text-sm text-slate-500 leading-relaxed">
+      <p className="mt-2 text-xs sm:text-sm text-zinc-500 leading-relaxed">
         عبارت جستجو یا فیلترهای دسته‌بندی، برند و محدوده قیمت را تغییر دهید تا کالاهای بیشتری نمایش داده شوند.
       </p>
       <div className="mt-5">
@@ -111,8 +111,8 @@ export function ErrorState({ message, onRetry }: ErrorStateProps) {
       <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 text-red-600">
         <AlertTriangle className="w-6 h-6" aria-hidden="true" />
       </div>
-      <h3 className="mt-4 text-base font-bold text-slate-900">خطا در دریافت اطلاعات فروشگاه</h3>
-      <p className="mt-2 text-sm text-slate-600">{message}</p>
+      <h3 className="mt-4 text-base font-bold text-zinc-900">خطا در دریافت اطلاعات فروشگاه</h3>
+      <p className="mt-2 text-sm text-zinc-600">{message}</p>
       <button
         type="button"
         onClick={onRetry}

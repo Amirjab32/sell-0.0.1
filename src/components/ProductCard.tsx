@@ -24,7 +24,7 @@ export function ProductCard({ product, onNavigateProduct }: ProductCardProps) {
       ? 'text-emerald-700'
       : product.stock_status === 'call'
         ? 'text-amber-700'
-        : 'text-slate-400';
+        : 'text-zinc-400';
 
   const shortStockLabel =
     product.stock_status === 'in_stock'
@@ -43,10 +43,10 @@ export function ProductCard({ product, onNavigateProduct }: ProductCardProps) {
         }
       }}
       data-testid="product-card"
-      className="group flex flex-col h-full rounded-xl bg-white border border-slate-200 overflow-hidden hover:border-emerald-600/70 hover:shadow-md transition-[border-color,box-shadow] duration-150 focus-visible:outline-2 focus-visible:outline-emerald-600"
+      className="group flex flex-col h-full rounded-xl bg-white border border-zinc-200 overflow-hidden hover:border-emerald-600/70 hover:shadow-md transition-[border-color,box-shadow] duration-150 focus-visible:outline-2 focus-visible:outline-emerald-600"
     >
       {/* Square Image Frame on Pure White */}
-      <div className="aspect-square w-full bg-white p-4 border-b border-slate-100 flex items-center justify-center overflow-hidden">
+      <div className="aspect-square w-full bg-white p-4 border-b border-zinc-100 flex items-center justify-center overflow-hidden">
         <ProductImage
           src={product.image_url}
           alt={product.name}
@@ -58,7 +58,7 @@ export function ProductCard({ product, onNavigateProduct }: ProductCardProps) {
       <div className="flex flex-1 flex-col p-4">
         {/* Subtle Brand + Compact Stock Status */}
         <div className="flex items-center justify-between gap-2 text-xs">
-          <span className="font-medium text-slate-500 truncate">
+          <span className="font-medium text-zinc-500 truncate">
             {product.brand || product.category}
           </span>
           <span className={`inline-flex items-center gap-1 font-medium shrink-0 ${stockColorClass}`}>
@@ -71,36 +71,36 @@ export function ProductCard({ product, onNavigateProduct }: ProductCardProps) {
         <h3
           dir="auto"
           title={product.name}
-          className="mt-2 text-sm font-semibold text-slate-900 leading-6 line-clamp-2 min-h-[3rem] group-hover:text-emerald-700 transition-colors"
+          className="mt-2 text-sm font-semibold text-zinc-900 leading-6 line-clamp-2 min-h-[3rem] group-hover:text-emerald-700 transition-colors"
         >
           {product.name}
         </h3>
 
         {/* Single Short Warranty Line */}
-        <div className="mt-2 min-h-[1.25rem] flex items-center gap-1.5 text-xs text-slate-500">
+        <div className="mt-2 min-h-[1.25rem] flex items-center gap-1.5 text-xs text-zinc-500">
           {product.warranty ? (
             <>
-              <ShieldCheck className="w-3.5 h-3.5 text-slate-400 shrink-0" aria-hidden="true" />
+              <ShieldCheck className="w-3.5 h-3.5 text-zinc-400 shrink-0" aria-hidden="true" />
               <span className="truncate">{product.warranty}</span>
             </>
           ) : (
-            <span className="truncate text-slate-400">{product.category}</span>
+            <span className="truncate text-zinc-400">{product.category}</span>
           )}
         </div>
 
         {/* Bottom-Aligned Toman Price */}
-        <div className="mt-auto pt-3 mt-3 border-t border-slate-100 flex items-baseline justify-end gap-1">
+        <div className="mt-auto pt-3 mt-3 border-t border-zinc-100 flex items-baseline justify-end gap-1">
           {product.stock_status === 'out_of_stock' ? (
-            <span className="text-sm font-semibold text-slate-400">ناموجود</span>
+            <span className="text-sm font-semibold text-zinc-400">ناموجود</span>
           ) : product.stock_status === 'call' && product.price_toman <= 0 ? (
             <span className="text-sm font-semibold text-amber-700">تماس بگیرید</span>
           ) : (
             <div className="tabular-nums text-left">
-              <span className="text-base sm:text-[17px] font-extrabold text-slate-900">
+              <span className="text-base sm:text-[17px] font-extrabold text-zinc-900">
                 {priceParts.value}
               </span>
               {priceParts.unit && (
-                <span className="text-xs font-medium text-slate-500 mr-1">{priceParts.unit}</span>
+                <span className="text-xs font-medium text-zinc-500 mr-1">{priceParts.unit}</span>
               )}
             </div>
           )}

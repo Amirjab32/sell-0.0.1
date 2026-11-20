@@ -10,7 +10,7 @@ interface FooterProps {
 
 export function Footer({ lastSyncedAt, onSelectCategory, onOpenConsultation }: FooterProps) {
   return (
-    <footer className="mt-16 bg-[#0F172A] text-slate-300 border-t border-slate-800">
+    <footer className="mt-16 bg-zinc-900 text-zinc-300 border-t border-zinc-800">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12 grid grid-cols-1 md:grid-cols-3 gap-10">
         <div className="space-y-3">
           <div className="flex items-center gap-2.5 text-lg font-extrabold text-white">
@@ -31,7 +31,7 @@ export function Footer({ lastSyncedAt, onSelectCategory, onOpenConsultation }: F
             </span>
             <span>{STORE_CONTACT.brandName}</span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-sm">
+          <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed max-w-sm">
             فروشگاه تخصصی سخت‌افزار، لپ‌تاپ‌های گیمینگ و مهندسی، مانیتورهای حرفه‌ای و تجهیزات جانبی با گارانتی معتبر و قیمت‌های به‌روز.
           </p>
         </div>
@@ -44,7 +44,7 @@ export function Footer({ lastSyncedAt, onSelectCategory, onOpenConsultation }: F
                 <button
                   type="button"
                   onClick={() => onSelectCategory(cat.categoryFilter)}
-                  className="text-slate-400 hover:text-emerald-400 transition-colors cursor-pointer"
+                  className="text-zinc-400 hover:text-emerald-400 transition-colors cursor-pointer"
                 >
                   {cat.label}
                 </button>
@@ -55,7 +55,7 @@ export function Footer({ lastSyncedAt, onSelectCategory, onOpenConsultation }: F
 
         <div className="space-y-3">
           <h3 className="text-sm font-bold text-white">ارتباط و مشاوره</h3>
-          <div className="space-y-2.5 text-xs sm:text-sm text-slate-400">
+          <div className="space-y-2.5 text-xs sm:text-sm text-zinc-400">
             <div className="flex items-center gap-2">
               <Phone className="w-4 h-4 text-emerald-400 shrink-0" aria-hidden="true" />
               <button
@@ -67,19 +67,19 @@ export function Footer({ lastSyncedAt, onSelectCategory, onOpenConsultation }: F
               </button>
             </div>
             <div className="flex items-start gap-2">
-              <MapPin className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" aria-hidden="true" />
+              <MapPin className="w-4 h-4 text-zinc-500 shrink-0 mt-0.5" aria-hidden="true" />
               <span>{STORE_CONTACT.address}</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="border-t border-slate-800/80 bg-[#0B1120]">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
+      <div className="border-t border-zinc-800 bg-zinc-950">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-400">
           <div className="flex items-center gap-2">
             <Clock className="w-3.5 h-3.5 text-emerald-400 shrink-0" aria-hidden="true" />
             <span>آخرین همگام‌سازی قیمت‌ها:</span>
-            <span className="text-slate-200 font-medium tabular-nums">
+            <span className="text-zinc-200 font-medium tabular-nums">
               {formatSyncTimestamp(lastSyncedAt)}
             </span>
           </div>
