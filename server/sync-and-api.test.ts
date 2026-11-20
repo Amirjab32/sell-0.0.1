@@ -358,3 +358,121 @@ test('Hero banner endpoints enforce admin auth, support image uploads, and serve
   const afterDelJson = (await afterDelPublic.json()) as { items: unknown[] };
   assert.equal(afterDelJson.items.length, 0);
 });
+
+test('First-login admin password setup stores salted PBKDF2 hash, enforces brute-force lockout, and protects sessions', async () => {
+  const db = createTestDb();
+
+  // Initially no password is configured
+  const statusBefore = await handleApiRequest(
+    new Request('http://localhost/api/admin/auth-status'),
+    db,
+    {}
+  );
+  assert.equal(statusBefore.status, 200);
+  assert.deepEqual(await statusBefore.json(), { configured: false });
+
+  // Reject short passwords
+  const shortRes = await handleApiRequest(
+    new Request('http://localhost/api/admin/setup-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: '123' }),
+    }),
+    db,
+    {}
+  );
+  assert.equal(shortRes.status, 400);
+
+  // First-login setup succeeds and returns a session token
+  const setupRes = await handleApiRequest(
+    new Request('http://localhost/api/admin/setup-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: 'MyStrongAdmin#2026' }),
+    }),
+    db,
+    {}
+  );
+  assert.equal(setupRes.status, 201);
+  const setupJson = (await setupRes.json()) as { sessionToken: string };
+  assert.ok(setupJson.sessionToken.length >= 32);
+
+  // Verify DB never stores plaintext password
+  const credRow = await db
+    .prepare('SELECT password_hash, salt, iterations FROM admin_credentials WHERE id = ?')
+    .bind('primary')
+    .first<{ password_hash: string; salt: string; iterations: number }>();
+  assert.ok(credRow);
+  assert.notEqual(credRow.password_hash, 'MyStrongAdmin#2026');
+  assert.equal(credRow.password_hash.length, 64);
+  assert.equal(credRow.salt.length, 32);
+  assert.equal(credRow.iterations, 100000);
+
+  // Subsequent setup attempts must be blocked with 409 Conflict
+  const secondSetup = await handleApiRequest(
+    new Request('http://localhost/api/admin/setup-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: 'AttackerPassword123' }),
+    }),
+    db,
+    {}
+  );
+  assert.equal(secondSetup.status, 409);
+
+  // Session token grants access to admin endpoints
+  const authedRes = await handleApiRequest(
+    new Request('http://localhost/api/admin/banners', {
+      headers: { 'X-Admin-Session': setupJson.sessionToken },
+    }),
+    db,
+    {}
+  );
+  assert.equal(authedRes.status, 200);
+
+  // Logout revokes the session token immediately
+  const logoutRes = await handleApiRequest(
+    new Request('http://localhost/api/admin/logout', {
+      method: 'POST',
+      headers: { 'X-Admin-Session': setupJson.sessionToken },
+    }),
+    db,
+    {}
+  );
+  assert.equal(logoutRes.status, 200);
+
+  const afterLogoutRes = await handleApiRequest(
+    new Request('http://localhost/api/admin/banners', {
+      headers: { 'X-Admin-Session': setupJson.sessionToken },
+    }),
+    db,
+    {}
+  );
+  assert.equal(afterLogoutRes.status, 401);
+
+  // Wrong password attempts trigger 429 lockout after 5 failures
+  for (let i = 0; i < 4; i++) {
+    const failRes = await handleApiRequest(
+      new Request('http://localhost/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: 'WrongPassword' }),
+      }),
+      db,
+      {}
+    );
+    assert.equal(failRes.status, 401);
+  }
+
+  const lockRes = await handleApiRequest(
+    new Request('http://localhost/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: 'WrongPassword' }),
+    }),
+    db,
+    {}
+  );
+  assert.equal(lockRes.status, 429);
+});
+

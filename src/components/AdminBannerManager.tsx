@@ -7,10 +7,12 @@ import {
   Eye,
   EyeOff,
   ImagePlus,
+  KeyRound,
   Link2,
   Lock,
   LogOut,
   Plus,
+  ShieldCheck,
   Trash2,
   Upload,
 } from 'lucide-react';
@@ -24,7 +26,7 @@ import type {
   PublicProduct,
 } from '../types/catalog';
 
-const ADMIN_SESSION_STORAGE_KEY = 'exo_admin_sync_token';
+const ADMIN_SESSION_STORAGE_KEY = 'exo_admin_session_token';
 
 interface AdminBannerManagerProps {
   onNavigateHome: () => void;
@@ -156,15 +158,27 @@ export function AdminBannerManager({
   onNavigateHome,
   onBannersChanged,
 }: AdminBannerManagerProps) {
-  const [token, setToken] = useState<string>(() => {
+  const [sessionToken, setSessionToken] = useState<string>(() => {
     if (typeof window === 'undefined') return '';
     return window.sessionStorage.getItem(ADMIN_SESSION_STORAGE_KEY) ?? '';
   });
-  const [tokenInput, setTokenInput] = useState('');
+  const [passwordConfigured, setPasswordConfigured] = useState<boolean | null>(null);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [confirmPasswordInput, setConfirmPasswordInput] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [authChecking, setAuthChecking] = useState(() => Boolean(token));
+  const [authChecking, setAuthChecking] = useState(true);
+  const [authSubmitting, setAuthSubmitting] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [serverUnconfigured, setServerUnconfigured] = useState(false);
+
+  // Change password state inside dashboard
+  const [changePassOpen, setChangePassOpen] = useState(false);
+  const [currentPassInput, setCurrentPassInput] = useState('');
+  const [newPassInput, setNewPassInput] = useState('');
+  const [confirmNewPassInput, setConfirmNewPassInput] = useState('');
+  const [changePassError, setChangePassError] = useState<string | null>(null);
+  const [changePassSuccess, setChangePassSuccess] = useState<string | null>(null);
+  const [changePassSaving, setChangePassSaving] = useState(false);
 
   // Banner list & catalog facets for no-code target selectors
   const [banners, setBanners] = useState<AdminBanner[]>([]);
@@ -208,48 +222,37 @@ export function AdminBannerManager({
     return Array.from(merged).sort();
   }, [catalogFacets.brands]);
 
-  const verifyAndLoad = useCallback(async (candidateToken: string) => {
-    const clean = candidateToken.trim();
-    if (!clean) {
-      setAuthChecking(false);
-      setIsAuthenticated(false);
-      return;
-    }
-
+  const checkAuthBootstrap = useCallback(async () => {
     setAuthChecking(true);
     setAuthError(null);
-    setServerUnconfigured(false);
-
     try {
-      const verifyRes = await fetch('/api/admin/verify', {
-        method: 'POST',
-        headers: {
-          'X-Admin-Sync-Token': clean,
-        },
-      });
-
-      if (verifyRes.status === 503) {
-        setServerUnconfigured(true);
-        setIsAuthenticated(false);
-        setAuthError('کلید امنیتی مدیریت روی سرور تنظیم نشده است.');
-        return;
+      const statusRes = await fetch('/api/admin/auth-status');
+      if (statusRes.ok) {
+        const statusJson = (await statusRes.json()) as { configured: boolean };
+        setPasswordConfigured(Boolean(statusJson.configured));
       }
 
-      if (!verifyRes.ok) {
+      const stored =
+        typeof window !== 'undefined'
+          ? (window.sessionStorage.getItem(ADMIN_SESSION_STORAGE_KEY) ?? '').trim()
+          : '';
+
+      if (stored) {
+        const verifyRes = await fetch('/api/admin/verify', {
+          method: 'POST',
+          headers: { 'X-Admin-Session': stored },
+        });
+        if (verifyRes.ok) {
+          setSessionToken(stored);
+          setIsAuthenticated(true);
+          return;
+        }
         if (typeof window !== 'undefined') {
           window.sessionStorage.removeItem(ADMIN_SESSION_STORAGE_KEY);
         }
-        setToken('');
-        setIsAuthenticated(false);
-        setAuthError('کلید مدیریت نامعتبر است.');
-        return;
+        setSessionToken('');
       }
-
-      if (typeof window !== 'undefined') {
-        window.sessionStorage.setItem(ADMIN_SESSION_STORAGE_KEY, clean);
-      }
-      setToken(clean);
-      setIsAuthenticated(true);
+      setIsAuthenticated(false);
     } catch {
       setAuthError('خطا در برقراری ارتباط با سرور.');
       setIsAuthenticated(false);
@@ -258,15 +261,107 @@ export function AdminBannerManager({
     }
   }, []);
 
+  useEffect(() => {
+    checkAuthBootstrap();
+  }, [checkAuthBootstrap]);
+
+  const handleSetupPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+
+    if (passwordInput.length < 8) {
+      setAuthError('رمز عبور باید حداقل ۸ کاراکتر باشد.');
+      return;
+    }
+    if (passwordInput !== confirmPasswordInput) {
+      setAuthError('رمز عبور و تکرار آن یکسان نیستند.');
+      return;
+    }
+
+    setAuthSubmitting(true);
+    try {
+      const res = await fetch('/api/admin/setup-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: passwordInput }),
+      });
+      const json = (await res.json()) as { sessionToken?: string; error?: string };
+      if (!res.ok || !json.sessionToken) {
+        setAuthError(json.error || 'خطا در ثبت رمز عبور مدیر.');
+        if (res.status === 409) {
+          setPasswordConfigured(true);
+        }
+        return;
+      }
+
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.setItem(ADMIN_SESSION_STORAGE_KEY, json.sessionToken);
+      }
+      setSessionToken(json.sessionToken);
+      setPasswordConfigured(true);
+      setPasswordInput('');
+      setConfirmPasswordInput('');
+      setIsAuthenticated(true);
+    } catch {
+      setAuthError('خطا در برقراری ارتباط با سرور.');
+    } finally {
+      setAuthSubmitting(false);
+    }
+  };
+
+  const handleLoginPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+
+    if (!passwordInput) {
+      setAuthError('لطفاً رمز عبور مدیر را وارد کنید.');
+      return;
+    }
+
+    setAuthSubmitting(true);
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: passwordInput }),
+      });
+      const json = (await res.json()) as { sessionToken?: string; error?: string };
+      if (!res.ok || !json.sessionToken) {
+        setAuthError(json.error || 'رمز عبور اشتباه است.');
+        return;
+      }
+
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.setItem(ADMIN_SESSION_STORAGE_KEY, json.sessionToken);
+      }
+      setSessionToken(json.sessionToken);
+      setPasswordInput('');
+      setIsAuthenticated(true);
+    } catch {
+      setAuthError('خطا در برقراری ارتباط با سرور.');
+    } finally {
+      setAuthSubmitting(false);
+    }
+  };
+
   const loadAdminData = useCallback(async (activeToken: string) => {
     setLoadingBanners(true);
     try {
       const [bannersRes, catalogRes] = await Promise.all([
         fetch('/api/admin/banners', {
-          headers: { 'X-Admin-Sync-Token': activeToken },
+          headers: { 'X-Admin-Session': activeToken },
         }),
         fetch('/api/catalog?limit=100&sort=in_stock_first'),
       ]);
+
+      if (bannersRes.status === 401) {
+        if (typeof window !== 'undefined') {
+          window.sessionStorage.removeItem(ADMIN_SESSION_STORAGE_KEY);
+        }
+        setSessionToken('');
+        setIsAuthenticated(false);
+        return;
+      }
 
       if (bannersRes.ok) {
         const bJson = (await bannersRes.json()) as { items: AdminBanner[] };
@@ -287,18 +382,10 @@ export function AdminBannerManager({
   }, []);
 
   useEffect(() => {
-    if (token) {
-      verifyAndLoad(token);
-    } else {
-      setAuthChecking(false);
+    if (isAuthenticated && sessionToken) {
+      loadAdminData(sessionToken);
     }
-  }, [token, verifyAndLoad]);
-
-  useEffect(() => {
-    if (isAuthenticated && token) {
-      loadAdminData(token);
-    }
-  }, [isAuthenticated, token, loadAdminData]);
+  }, [isAuthenticated, sessionToken, loadAdminData]);
 
   const resetForm = () => {
     setEditingId(null);
@@ -370,7 +457,7 @@ export function AdminBannerManager({
         method,
         headers: {
           'Content-Type': 'application/json',
-          'X-Admin-Sync-Token': token,
+          'X-Admin-Session': sessionToken,
         },
         body: JSON.stringify({
           title: title.trim(),
@@ -389,7 +476,7 @@ export function AdminBannerManager({
 
       setFormSuccess(editingId ? 'بنر با موفقیت ویرایش شد.' : 'بنر جدید با موفقیت اضافه شد.');
       resetForm();
-      await loadAdminData(token);
+      await loadAdminData(sessionToken);
       onBannersChanged();
     } catch {
       setFormError('خطا در ارتباط با سرور هنگام ذخیره بنر.');
@@ -418,12 +505,12 @@ export function AdminBannerManager({
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'X-Admin-Sync-Token': token,
+          'X-Admin-Session': sessionToken,
         },
         body: JSON.stringify({ is_active: !banner.is_active }),
       });
       if (res.ok) {
-        await loadAdminData(token);
+        await loadAdminData(sessionToken);
         onBannersChanged();
       }
     } catch {
@@ -435,14 +522,14 @@ export function AdminBannerManager({
     try {
       const res = await fetch(`/api/admin/banners/${encodeURIComponent(id)}`, {
         method: 'DELETE',
-        headers: { 'X-Admin-Sync-Token': token },
+        headers: { 'X-Admin-Session': sessionToken },
       });
       if (res.ok) {
         setConfirmDeleteId(null);
         if (editingId === id) {
           resetForm();
         }
-        await loadAdminData(token);
+        await loadAdminData(sessionToken);
         onBannersChanged();
       }
     } catch {
@@ -463,7 +550,7 @@ export function AdminBannerManager({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Admin-Sync-Token': token,
+          'X-Admin-Session': sessionToken,
         },
         body: JSON.stringify({ ids: reordered.map((b) => b.id) }),
       });
@@ -473,18 +560,77 @@ export function AdminBannerManager({
         onBannersChanged();
       }
     } catch {
-      await loadAdminData(token);
+      await loadAdminData(sessionToken);
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      if (sessionToken) {
+        await fetch('/api/admin/logout', {
+          method: 'POST',
+          headers: { 'X-Admin-Session': sessionToken },
+        });
+      }
+    } catch {
+      // Clear local session regardless
+    }
     if (typeof window !== 'undefined') {
       window.sessionStorage.removeItem(ADMIN_SESSION_STORAGE_KEY);
     }
-    setToken('');
-    setTokenInput('');
+    setSessionToken('');
+    setPasswordInput('');
+    setConfirmPasswordInput('');
     setIsAuthenticated(false);
     setBanners([]);
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setChangePassError(null);
+    setChangePassSuccess(null);
+
+    if (!currentPassInput) {
+      setChangePassError('لطفاً رمز عبور فعلی را وارد کنید.');
+      return;
+    }
+    if (newPassInput.length < 8) {
+      setChangePassError('رمز عبور جدید باید حداقل ۸ کاراکتر باشد.');
+      return;
+    }
+    if (newPassInput !== confirmNewPassInput) {
+      setChangePassError('رمز عبور جدید و تکرار آن یکسان نیستند.');
+      return;
+    }
+
+    setChangePassSaving(true);
+    try {
+      const res = await fetch('/api/admin/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Session': sessionToken,
+        },
+        body: JSON.stringify({
+          currentPassword: currentPassInput,
+          newPassword: newPassInput,
+        }),
+      });
+      const json = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok) {
+        setChangePassError(json.error || 'خطا در تغییر رمز عبور.');
+        return;
+      }
+
+      setCurrentPassInput('');
+      setNewPassInput('');
+      setConfirmNewPassInput('');
+      setChangePassSuccess('رمز عبور مدیر با موفقیت تغییر یافت و سایر نشست‌ها بسته شدند.');
+    } catch {
+      setChangePassError('خطا در ارتباط با سرور.');
+    } finally {
+      setChangePassSaving(false);
+    }
   };
 
   if (authChecking) {
@@ -499,60 +645,97 @@ export function AdminBannerManager({
   }
 
   if (!isAuthenticated) {
+    const isFirstTimeSetup = passwordConfigured === false;
+
     return (
       <div className="mx-auto max-w-md px-4 py-12 sm:py-16">
         <div className="rounded-2xl bg-white border border-zinc-200 p-6 sm:p-8 shadow-sm space-y-6">
           <div className="space-y-2 text-center">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-900 text-white">
-              <Lock className="w-5 h-5 text-emerald-400" aria-hidden="true" />
+              {isFirstTimeSetup ? (
+                <ShieldCheck className="w-5 h-5 text-emerald-400" aria-hidden="true" />
+              ) : (
+                <Lock className="w-5 h-5 text-emerald-400" aria-hidden="true" />
+              )}
             </div>
             <h1 className="text-lg font-extrabold text-zinc-900">
-              پنل اختصاصی مدیریت بنرهای {STORE_CONTACT.brandName}
+              {isFirstTimeSetup
+                ? `تنظیم رمز عبور مدیر ${STORE_CONTACT.brandName}`
+                : `ورود به پنل مدیریت ${STORE_CONTACT.brandName}`}
             </h1>
             <p className="text-xs sm:text-sm text-zinc-500 leading-relaxed">
-              این بخش فقط با کلید امنیتی مدیر باز می‌شود و خریداران به آن دسترسی ندارند.
+              {isFirstTimeSetup
+                ? 'در اولین ورود، رمز عبور اختصاصی خود را تعیین کنید. این رمز به صورت رمزنگاری‌شده در پایگاه‌داده ذخیره می‌شود و خریداران هیچ دسترسی به این بخش ندارند.'
+                : 'برای مدیریت بنرها رمز عبور خود را وارد کنید. پس از ۵ بار تلاش ناموفق، ورود موقتاً مسدود می‌شود.'}
             </p>
           </div>
 
           <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              verifyAndLoad(tokenInput);
-            }}
+            onSubmit={isFirstTimeSetup ? handleSetupPassword : handleLoginPassword}
             className="space-y-4"
           >
             <div>
-              <label htmlFor="admin-token-input" className="block text-xs font-semibold text-zinc-700 mb-1.5">
-                کلید امنیتی مدیریت
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label htmlFor="admin-password-input" className="block text-xs font-semibold text-zinc-700">
+                  {isFirstTimeSetup ? 'رمز عبور جدید مدیر (حداقل ۸ کاراکتر)' : 'رمز عبور مدیر'}
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="text-[11px] text-zinc-500 hover:text-zinc-900 cursor-pointer"
+                >
+                  {showPassword ? 'مخفی کردن' : 'نمایش رمز'}
+                </button>
+              </div>
               <input
-                id="admin-token-input"
-                type="password"
-                autoComplete="current-password"
-                value={tokenInput}
-                onChange={(e) => setTokenInput(e.target.value)}
-                placeholder="مقدار ADMIN_SYNC_TOKEN را وارد کنید"
+                id="admin-password-input"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete={isFirstTimeSetup ? 'new-password' : 'current-password'}
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                placeholder={isFirstTimeSetup ? 'یک رمز عبور قوی انتخاب کنید' : 'رمز عبور مدیر را وارد کنید'}
                 dir="ltr"
                 className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:bg-white focus:border-emerald-600 focus:outline-none"
               />
             </div>
 
+            {isFirstTimeSetup && (
+              <div>
+                <label
+                  htmlFor="admin-password-confirm"
+                  className="block text-xs font-semibold text-zinc-700 mb-1.5"
+                >
+                  تکرار رمز عبور
+                </label>
+                <input
+                  id="admin-password-confirm"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  value={confirmPasswordInput}
+                  onChange={(e) => setConfirmPasswordInput(e.target.value)}
+                  placeholder="رمز عبور را دوباره وارد کنید"
+                  dir="ltr"
+                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:bg-white focus:border-emerald-600 focus:outline-none"
+                />
+              </div>
+            )}
+
             {authError && (
               <div className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs text-red-700 leading-relaxed">
                 {authError}
-                {serverUnconfigured && (
-                  <div className="mt-2 pt-2 border-t border-red-200/70 text-[11px] text-red-800" dir="ltr">
-                    <code>ADMIN_SYNC_TOKEN=&quot;your-secret-key&quot;</code>
-                  </div>
-                )}
               </div>
             )}
 
             <button
               type="submit"
-              className="w-full rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors cursor-pointer"
+              disabled={authSubmitting}
+              className="w-full rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors cursor-pointer"
             >
-              ورود به مدیریت بنرها
+              {authSubmitting
+                ? 'در حال بررسی...'
+                : isFirstTimeSetup
+                  ? 'ثبت امن رمز عبور و ورود به پنل'
+                  : 'ورود به مدیریت بنرها'}
             </button>
           </form>
 
@@ -583,7 +766,19 @@ export function AdminBannerManager({
             بدون نیاز به کدنویسی عکس آپلود کنید و هر بنر را به تب دسته‌بندی، برند یا صفحه محصول وصل نمایید (تعویض خودکار هر ۵ ثانیه).
           </p>
         </div>
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setChangePassOpen((prev) => !prev);
+              setChangePassError(null);
+              setChangePassSuccess(null);
+            }}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-xs font-medium text-zinc-700 hover:border-emerald-600 hover:text-emerald-700 transition-colors cursor-pointer"
+          >
+            <KeyRound className="w-4 h-4" aria-hidden="true" />
+            <span>تغییر رمز عبور</span>
+          </button>
           <button
             type="button"
             onClick={onNavigateHome}
@@ -602,6 +797,82 @@ export function AdminBannerManager({
           </button>
         </div>
       </div>
+
+      {changePassOpen && (
+        <section className="rounded-2xl bg-white border border-zinc-200 p-5 space-y-4">
+          <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+            <h2 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
+              <KeyRound className="w-4 h-4 text-emerald-600" aria-hidden="true" />
+              <span>تغییر رمز عبور مدیر</span>
+            </h2>
+            <button
+              type="button"
+              onClick={() => setChangePassOpen(false)}
+              className="text-xs text-zinc-500 hover:text-zinc-900 cursor-pointer"
+            >
+              بستن
+            </button>
+          </div>
+          <form onSubmit={handleChangePassword} className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+            <div>
+              <label htmlFor="current-pass" className="block text-xs font-semibold text-zinc-700 mb-1">
+                رمز عبور فعلی
+              </label>
+              <input
+                id="current-pass"
+                type="password"
+                dir="ltr"
+                value={currentPassInput}
+                onChange={(e) => setCurrentPassInput(e.target.value)}
+                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs sm:text-sm text-zinc-900 focus:bg-white focus:border-emerald-600 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label htmlFor="new-pass" className="block text-xs font-semibold text-zinc-700 mb-1">
+                رمز جدید (حداقل ۸ کاراکتر)
+              </label>
+              <input
+                id="new-pass"
+                type="password"
+                dir="ltr"
+                value={newPassInput}
+                onChange={(e) => setNewPassInput(e.target.value)}
+                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs sm:text-sm text-zinc-900 focus:bg-white focus:border-emerald-600 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label htmlFor="confirm-new-pass" className="block text-xs font-semibold text-zinc-700 mb-1">
+                تکرار رمز جدید
+              </label>
+              <input
+                id="confirm-new-pass"
+                type="password"
+                dir="ltr"
+                value={confirmNewPassInput}
+                onChange={(e) => setConfirmNewPassInput(e.target.value)}
+                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs sm:text-sm text-zinc-900 focus:bg-white focus:border-emerald-600 focus:outline-none"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={changePassSaving}
+              className="rounded-xl bg-emerald-600 px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors cursor-pointer"
+            >
+              {changePassSaving ? 'در حال ذخیره...' : 'ذخیره رمز جدید'}
+            </button>
+          </form>
+          {changePassError && (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2 text-xs text-red-700">
+              {changePassError}
+            </div>
+          )}
+          {changePassSuccess && (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2 text-xs text-emerald-800">
+              {changePassSuccess}
+            </div>
+          )}
+        </section>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Right Column: Add / Edit Banner Form */}

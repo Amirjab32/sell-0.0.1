@@ -12,6 +12,17 @@ import { CatalogSkeleton, EmptyCatalogState, ErrorState } from './components/Sta
 import { toPersianDigits } from './lib/format';
 import type { CatalogResponse, CatalogSort, PublicBanner, PublicProduct } from './types/catalog';
 
+const ADMIN_ROUTE_PATH = '/aدmin';
+
+function isHiddenAdminPath(pathname: string): boolean {
+  try {
+    const decoded = decodeURIComponent(pathname).replace(/\/+$/, '');
+    return decoded === ADMIN_ROUTE_PATH;
+  } catch {
+    return false;
+  }
+}
+
 function extractProductSlugFromPath(pathname: string): string | null {
   const match = pathname.match(/^\/product\/([^/]+)\/?$/);
   return match ? decodeURIComponent(match[1]) : null;
@@ -88,7 +99,7 @@ export default function App() {
 
   const catalogSectionRef = useRef<HTMLElement | null>(null);
 
-  const isAdminPage = pathname === '/admin' || pathname === '/admin/';
+  const isAdminPage = isHiddenAdminPath(pathname);
   const productSlug = isAdminPage ? null : extractProductSlugFromPath(pathname);
 
   const applyUrlFilters = useCallback((search: string) => {
@@ -114,7 +125,7 @@ export default function App() {
     const onPopState = () => {
       const nextPath = window.location.pathname;
       setPathname(nextPath);
-      if (nextPath !== '/admin' && nextPath !== '/admin/' && !extractProductSlugFromPath(nextPath)) {
+      if (!isHiddenAdminPath(nextPath) && !extractProductSlugFromPath(nextPath)) {
         applyUrlFilters(window.location.search);
       }
     };
@@ -132,7 +143,7 @@ export default function App() {
       }
       setPathname(resolved.pathname);
 
-      const targetIsAdmin = resolved.pathname === '/admin' || resolved.pathname === '/admin/';
+      const targetIsAdmin = isHiddenAdminPath(resolved.pathname);
       const targetIsProduct = Boolean(extractProductSlugFromPath(resolved.pathname));
 
       if (!targetIsAdmin && !targetIsProduct) {

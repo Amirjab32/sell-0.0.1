@@ -1,3 +1,12 @@
+import {
+  changeAdminPassword,
+  extractSessionToken,
+  isAdminPasswordConfigured,
+  loginWithAdminPassword,
+  logoutAdminSession,
+  setupInitialAdminPassword,
+  verifyAdminAccess,
+} from './admin-auth';
 import { verifySyncAuth } from './auth';
 import {
   type BannerMutationInput,
@@ -21,7 +30,7 @@ import { fetchCatalogFromSourceUrl, runCatalogSync } from './sync';
 export const API_CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Admin-Sync-Token',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Admin-Sync-Token, X-Admin-Session',
 };
 
 function jsonResponse(data: unknown, status = 200): Response {
@@ -160,9 +169,71 @@ export async function handleApiRequest(
       }
     }
 
-    // 7. Admin Banner Management Routes (Strictly protected by ADMIN_SYNC_TOKEN)
+    // 7. Admin Auth & Session Routes (Database-backed salted PBKDF2 + hashed sessions)
+    if (pathname === '/api/admin/auth-status' && request.method === 'GET') {
+      const configured = await isAdminPasswordConfigured(db);
+      return jsonResponse({ configured }, 200);
+    }
+
+    if (pathname === '/api/admin/setup-password' && request.method === 'POST') {
+      let body: { password?: unknown };
+      try {
+        body = (await request.json()) as { password?: unknown };
+      } catch {
+        return jsonResponse({ error: 'Invalid JSON request body' }, 400);
+      }
+      const result = await setupInitialAdminPassword(db, body?.password);
+      if (result.ok === false) {
+        return jsonResponse({ error: result.error }, result.status);
+      }
+      return jsonResponse({ sessionToken: result.sessionToken, expiresAt: result.expiresAt }, 201);
+    }
+
+    if (pathname === '/api/admin/login' && request.method === 'POST') {
+      let body: { password?: unknown };
+      try {
+        body = (await request.json()) as { password?: unknown };
+      } catch {
+        return jsonResponse({ error: 'Invalid JSON request body' }, 400);
+      }
+      const result = await loginWithAdminPassword(db, body?.password);
+      if (result.ok === false) {
+        return jsonResponse({ error: result.error }, result.status);
+      }
+      return jsonResponse({ sessionToken: result.sessionToken, expiresAt: result.expiresAt }, 200);
+    }
+
+    if (pathname === '/api/admin/logout' && request.method === 'POST') {
+      await logoutAdminSession(db, request.headers);
+      return jsonResponse({ ok: true }, 200);
+    }
+
+    if (pathname === '/api/admin/change-password' && request.method === 'POST') {
+      const authResult = await verifyAdminAccess(request.headers, db, env.ADMIN_SYNC_TOKEN);
+      if (authResult.authorized === false) {
+        return jsonResponse({ error: authResult.error }, authResult.status);
+      }
+      let body: { currentPassword?: unknown; newPassword?: unknown };
+      try {
+        body = (await request.json()) as { currentPassword?: unknown; newPassword?: unknown };
+      } catch {
+        return jsonResponse({ error: 'Invalid JSON request body' }, 400);
+      }
+      const result = await changeAdminPassword(
+        db,
+        body?.currentPassword,
+        body?.newPassword,
+        extractSessionToken(request.headers)
+      );
+      if (result.ok === false) {
+        return jsonResponse({ error: result.error }, result.status);
+      }
+      return jsonResponse({ ok: true }, 200);
+    }
+
+    // 8. Admin Banner Management Routes (Protected by DB Session or ADMIN_SYNC_TOKEN)
     if (pathname === '/api/admin/verify' && request.method === 'POST') {
-      const authResult = verifySyncAuth(request.headers, env.ADMIN_SYNC_TOKEN);
+      const authResult = await verifyAdminAccess(request.headers, db, env.ADMIN_SYNC_TOKEN);
       if (authResult.authorized === false) {
         return jsonResponse({ error: authResult.error }, authResult.status);
       }
@@ -170,7 +241,7 @@ export async function handleApiRequest(
     }
 
     if (pathname === '/api/admin/banners' && request.method === 'GET') {
-      const authResult = verifySyncAuth(request.headers, env.ADMIN_SYNC_TOKEN);
+      const authResult = await verifyAdminAccess(request.headers, db, env.ADMIN_SYNC_TOKEN);
       if (authResult.authorized === false) {
         return jsonResponse({ error: authResult.error }, authResult.status);
       }
@@ -179,7 +250,7 @@ export async function handleApiRequest(
     }
 
     if (pathname === '/api/admin/banners' && request.method === 'POST') {
-      const authResult = verifySyncAuth(request.headers, env.ADMIN_SYNC_TOKEN);
+      const authResult = await verifyAdminAccess(request.headers, db, env.ADMIN_SYNC_TOKEN);
       if (authResult.authorized === false) {
         return jsonResponse({ error: authResult.error }, authResult.status);
       }
@@ -197,7 +268,7 @@ export async function handleApiRequest(
     }
 
     if (pathname === '/api/admin/banners/reorder' && request.method === 'POST') {
-      const authResult = verifySyncAuth(request.headers, env.ADMIN_SYNC_TOKEN);
+      const authResult = await verifyAdminAccess(request.headers, db, env.ADMIN_SYNC_TOKEN);
       if (authResult.authorized === false) {
         return jsonResponse({ error: authResult.error }, authResult.status);
       }
@@ -219,7 +290,7 @@ export async function handleApiRequest(
 
     const adminBannerMatch = pathname.match(/^\/api\/admin\/banners\/([^/]+)$/);
     if (adminBannerMatch) {
-      const authResult = verifySyncAuth(request.headers, env.ADMIN_SYNC_TOKEN);
+      const authResult = await verifyAdminAccess(request.headers, db, env.ADMIN_SYNC_TOKEN);
       if (authResult.authorized === false) {
         return jsonResponse({ error: authResult.error }, authResult.status);
       }
