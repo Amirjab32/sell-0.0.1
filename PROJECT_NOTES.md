@@ -31,4 +31,5 @@
 - `src/components/`: `Header.tsx`, `HeroBannerSlider.tsx` (5s auto-advance, dash indicators, swipe), `AdminBannerManager.tsx` (first-login password setup on `/aدmin`, PBKDF2 login, change password, logout, canvas image optimizer, no-code target links), `FilterSidebar.tsx`, `SortToolbar.tsx`, `ProductCard.tsx`, `ProductImage.tsx`, `ProductDetailPage.tsx`, `Modals.tsx`, `States.tsx`, `Footer.tsx`.
 
 ## Verification Status
+- Removed conflicting `esbuild` (`^0.25.0`) devDependency pin from `package.json` so `npm install` resolves `esbuild` `0.28.x` cleanly with Vite 8 and `tsx`.
 - Run `compile_applet`, `lint_applet`, and `npx tsx --test src/lib/format.test.ts server/sync-and-api.test.ts`.
