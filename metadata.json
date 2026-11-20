@@ -1,0 +1,6 @@
+{
+  "name": "اگزو تک | فروشگاه تخصصی سخت‌افزار و تجهیزات گیمینگ",
+  "description": "ویترین تخصصی فروش سخت‌افزار کامپیوتر، لپ‌تاپ گیمینگ، مانیتور و تجهیزات جانبی حرفه‌ای با استعلام قیمت به‌روز.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" fill="none">
+  <rect width="400" height="300" fill="#0F1520"/>
+  <!-- TKL Keyboard -->
+  <rect x="44" y="98" width="218" height="104" rx="8" fill="#18202F" stroke="#334155" stroke-width="2"/>
+  <rect x="56" y="110" width="194" height="80" rx="4" fill="#0B111C"/>
+  <path d="M66 124H240M66 140H240M66 156H240M66 172H240" stroke="#334155" stroke-width="8" stroke-dasharray="12 6"/>
+  <rect x="108" y="168" width="84" height="8" rx="2" fill="#10B981" fill-opacity="0.75"/>
+  <!-- Wireless Gaming Mouse -->
+  <rect x="286" y="106" width="66" height="96" rx="33" fill="#18202F" stroke="#475569" stroke-width="2"/>
+  <path d="M319 106V146" stroke="#334155" stroke-width="2"/>
+  <rect x="315" y="120" width="8" height="18" rx="4" fill="#10B981"/>
+</svg>

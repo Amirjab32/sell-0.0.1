@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" fill="none">
+  <defs>
+    <radialGradient id="heroGlow" cx="55%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#10B981" stop-opacity="0.16"/>
+      <stop offset="60%" stop-color="#0F172A" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#0B0F17" stop-opacity="1"/>
+    </radialGradient>
+    <linearGradient id="caseBody" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="#0B0F17"/>
+  <rect width="800" height="450" fill="url(#heroGlow)"/>
+  <!-- Desk Surface -->
+  <path d="M40 375H760" stroke="#1E293B" stroke-width="2"/>
+  <rect x="60" y="375" width="680" height="40" fill="#0D131E"/>
+  <!-- Ultrawide Monitor -->
+  <rect x="115" y="105" width="340" height="196" rx="8" fill="#111827" stroke="#334155" stroke-width="2.5"/>
+  <rect x="125" y="115" width="320" height="176" rx="4" fill="#090D16"/>
+  <path d="M145 250 L215 190 L280 220 L360 155 L425 195" stroke="#10B981" stroke-width="2.5" stroke-opacity="0.8"/>
+  <path d="M145 250 L215 190 L280 220 L360 155 L425 195 L425 275 L145 275 Z" fill="#10B981" fill-opacity="0.08"/>
+  <path d="M265 301L250 365H320L305 301" fill="#1E293B" stroke="#334155" stroke-width="1.5"/>
+  <rect x="220" y="365" width="130" height="10" rx="3" fill="#334155"/>
+  <!-- Custom Liquid-Cooled PC Tower -->
+  <rect x="495" y="78" width="205" height="297" rx="10" fill="url(#caseBody)" stroke="#334155" stroke-width="2.5"/>
+  <rect x="512" y="96" width="171" height="240" rx="6" fill="#090E18" stroke="#1E293B" stroke-width="1.5"/>
+  <!-- Motherboard & AIO -->
+  <rect x="530" y="114" width="110" height="145" rx="4" fill="#111827" stroke="#1E293B"/>
+  <circle cx="585" cy="168" r="24" fill="#0F172A" stroke="#10B981" stroke-width="2.5"/>
+  <circle cx="585" cy="168" r="10" fill="#10B981" fill-opacity="0.3"/>
+  <!-- RAM Sticks -->
+  <rect x="622" y="135" width="6" height="52" rx="1.5" fill="#10B981" fill-opacity="0.8"/>
+  <rect x="632" y="135" width="6" height="52" rx="1.5" fill="#10B981" fill-opacity="0.55"/>
+  <!-- GPU Horizontal -->
+  <rect x="525" y="232" width="138" height="32" rx="4" fill="#1E293B" stroke="#475569" stroke-width="1.5"/>
+  <path d="M535 248H652" stroke="#10B981" stroke-width="2"/>
+  <!-- Front Fans -->
+  <circle cx="662" cy="145" r="14" stroke="#334155" stroke-width="2"/>
+  <circle cx="662" cy="195" r="14" stroke="#334155" stroke-width="2"/>
+  <circle cx="662" cy="245" r="14" stroke="#334155" stroke-width="2"/>
+  <!-- Keyboard & Mouse -->
+  <rect x="175" y="352" width="150" height="14" rx="3" fill="#1E293B" stroke="#475569"/>
+  <rect x="184" y="348" width="132" height="4" rx="1" fill="#10B981" fill-opacity="0.5"/>
+  <rect x="355" y="352" width="38" height="14" rx="6" fill="#1E293B" stroke="#475569"/>
+</svg>
