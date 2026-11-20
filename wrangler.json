@@ -13,7 +13,7 @@
     {
       "binding": "DB",
       "database_name": "exo_tech_storefront_db",
-      "database_id": "REPLACE_WITH_YOUR_D1_DATABASE_ID",
+      "database_id": "50d9b7bf-276f-4157-af56-080b509659dc",
       "migrations_dir": "migrations"
     }
   ],

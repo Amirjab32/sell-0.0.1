@@ -3,7 +3,7 @@
 ## Overview
 - **Project**: "اگزو تک" — specialized Persian RTL (`dir="rtl"`, `lang="fa"`, Vazirmatn) hardware, gaming laptop & peripherals storefront ("سایت دوم"), inspired by Exo Gaming.
 - **Role**: Public customer storefront paired with an external internal pricing system ("سایت اول") via protected server-to-server sync, plus a private admin banner manager.
-- **Target Hosting**: Cloudflare Workers with Assets (`wrangler.json`) + Cloudflare D1 (`DB`), zero R2 or credit-card-required dependencies.
+- **Target Hosting**: Cloudflare Workers with Assets (`wrangler.json`) + Cloudflare D1 (`DB` -> `exo_tech_storefront_db`, ID `50d9b7bf-276f-4157-af56-080b509659dc`), zero R2 or credit-card-required dependencies.
 - **Local Dev Simulation**: Express (`server.ts`, 5MB JSON limit for banner uploads) on port 3000 with Vite middleware and Node 22 `node:sqlite` (`LocalD1Database`) mirroring Cloudflare D1.
 
 ## Database Schema (`migrations/0001_init.sql`, `0002_hero_banners.sql`, `0003_admin_auth.sql`)
